@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pathfinder | Future Career Navigator</title>
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <style>
+        :root { 
+            --bg: #070b14; 
+            --accent: #6366f1; 
+            --glass: rgba(255, 255, 255, 0.03); 
+            --border: rgba(255,255,255,0.1); 
+            --success: #10b981; 
+        }
+
+        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.3s ease; }
+        body { background-color: var(--bg); color: #e2e8f0; margin: 0; padding: 20px; overflow-x: hidden; }
+        
+        nav { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto 40px auto; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+        
+        .page { display: none; max-width: 1100px; margin: 0 auto; animation: slideUp 0.6s ease; }
+        .active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; margin-top: 40px; }
+        .card { background: var(--glass); padding: 40px 20px; border-radius: 28px; cursor: pointer; text-align: center; border: 1px solid var(--border); position: relative; }
+        .card:hover { transform: translateY(-10px); border-color: var(--accent); background: rgba(99, 102, 241, 0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        .card svg, #career-content svg { 
+            width: 50px; height: 50px; margin-bottom: 15px; stroke-width: 2.5px;
+            filter: drop-shadow(0 0 5px rgba(139, 92, 246, 0.5));
+        }
+        .card svg path, #career-content svg path, .card svg circle, #career-content svg circle, .card svg line, #career-content svg line, .card svg polyline, #career-content svg polyline {
+            stroke: url(#icon-gradient) !important;
+        }
+
+        .modern-roadmap { position: relative; padding: 20px 0; }
+        .modern-roadmap::before { content: ''; position: absolute; left: 15px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, transparent, var(--accent), transparent); }
+        .roadmap-step { position: relative; padding-left: 45px; margin-bottom: 35px; }
+        .step-blob { position: absolute; left: 0; top: 0; width: 32px; height: 32px; background: var(--bg); border: 2px solid var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--accent); box-shadow: 0 0 15px rgba(99, 102, 241, 0.3); z-index: 2; }
+        .step-content { background: rgba(255,255,255,0.02); padding: 15px 20px; border-radius: 15px; border: 1px solid var(--border); }
+        .step-content b { color: #fff; font-size: 1rem; display: block; }
+        .step-content span { font-size: 0.7rem; color: var(--accent); text-transform: uppercase; font-weight: 700; }
+
+        .security-container { margin-top: 25px; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 20px; border: 1px solid var(--border); }
+        .meter-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-top: 10px; overflow: hidden; }
+        .meter-fill { height: 100%; background: linear-gradient(to right, #6366f1, #10b981); border-radius: 10px; transition: width 1s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
+
+        .benefit-tag { display: inline-block; background: rgba(99, 102, 241, 0.1); color: #a5b4fc; padding: 8px 15px; border-radius: 8px; margin: 5px; font-size: 0.85rem; border: 1px solid rgba(99, 102, 241, 0.2); }
+        .glass-panel { background: var(--glass); padding: 45px; border-radius: 32px; border: 1px solid var(--border); backdrop-filter: blur(15px); }
+        .btn { background: var(--accent); color: white; border: none; padding: 14px 30px; border-radius: 14px; cursor: pointer; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .option-btn { display: block; width: 100%; padding: 20px; margin: 15px 0; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: white; border-radius: 16px; cursor: pointer; text-align: left; }
+        .option-btn:hover { background: var(--accent); padding-left: 30px; }
+        input[type="email"] { padding: 15px; border-radius: 12px; width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--accent); color: white; margin: 20px 0; font-size: 1rem; outline: none; }
+
+        .growth-row { display: flex; align-items: center; gap: 20px; margin-bottom: 15px; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 12px; border: 1px solid var(--border); }
+        .growth-bar-container { flex-grow: 1; height: 12px; background: rgba(255,255,255,0.05); border-radius: 6px; overflow: hidden; }
+        .growth-bar-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #f472b6); width: 0; transition: width 1.5s ease-out; }
+    </style>
+</head>
+<body>
+
+    <svg width="0" height="0" style="position: absolute;">
+        <defs>
+            <linearGradient id="icon-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#f472b6" /> <stop offset="50%" stop-color="#8b5cf6" /> <stop offset="100%" stop-color="#06b6d4" /> </linearGradient>
+        </defs>
+    </svg>
+
+    <nav>
+        <h1 style="color: var(--accent); margin: 0; font-style: italic; letter-spacing: 2px; font-weight: 800;">PATHFINDER.</h1>
+        <div style="font-size: 0.7rem; opacity: 0.5; letter-spacing: 3px;">FUTURE CAREER AI</div>
+    </nav>
+
+    <div id="page1" class="page active">
+        <h2 style="text-align: center; opacity: 0.8; font-weight: 300;">Explore <span style="color:var(--accent); font-weight:700;">20 Future Horizons</span></h2>
+        <div id="career-grid" class="grid"></div>
+        <div style="text-align: center; margin-top: 50px;">
+            <button onclick="showGrowthPage()" class="btn" style="background: rgba(255,255,255,0.1); border: 1px solid var(--accent);">View Market Pulse</button>
+        </div>
+    </div>
+
+    <div id="page2" class="page">
+        <button class="btn" onclick="showPage('page1')" style="margin-bottom: 25px; font-size: 0.7rem; background: transparent; border: 1px solid var(--border);">← Back to Explorer</button>
+        <div id="career-content" class="glass-panel"></div>
+        <div style="text-align: center; margin-top: 50px; padding: 30px; border-top: 1px dashed var(--border);">
+            <button onclick="startQuiz()" class="btn" style="background: var(--success);">Sync Personality Profile</button>
+        </div>
+    </div>
+
+    <div id="page3" class="page">
+        <button class="btn" onclick="showPage('page1')" style="margin-bottom: 25px; font-size: 0.7rem; background: transparent; border: 1px solid var(--border);">← Back to Explorer</button>
+        <div class="glass-panel">
+            <h2 style="text-align: center; margin-bottom: 30px;">Global <span style="color:var(--accent);">Market Pulse</span> (2026-2030)</h2>
+            <div id="growth-list"></div>
+        </div>
+    </div>
+
+    <div id="page4" class="page">
+        <div class="glass-panel" style="max-width: 700px; margin: 0 auto; text-align: center;">
+            <div id="quiz-container">
+                <h2 id="question-text">Initializing AI...</h2>
+                <div id="quiz-options"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="page5" class="page">
+        <div class="glass-panel" style="max-width: 600px; margin: 0 auto; text-align: center;">
+            <i data-lucide="mail" style="width:60px; height:60px; color:var(--accent); margin-bottom: 20px;"></i>
+            <h2>Transmit Analysis</h2>
+            <p style="opacity:0.7;">Enter email to receive the report</p>
+            <input type="email" id="userEmail" placeholder="user@futuremail.com">
+            <button class="btn" style="width:100%" id="sendBtn">Receive Report</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize EmailJS
+        emailjs.init("ZCan_OSIQE6aRUpdi"); 
+        const SERVICE_ID = "service_wup4z9d";
+        const TEMPLATE_ID = "template_mo36ojf";
+
+        const careers = [
+            { title: "AI Architect", icon: "brain-circuit", security: 95, growth: 42, roadmap: ["Linear Algebra & Calculus", "Neural Architecture Search", "Large Language Model Tuning"], benefits: ["High Demand", "Future-Proof", "Remote Ready", "Top Tier Salary"], uses: "Engineering the foundational intelligence of the future." },
+            { title: "Cybersecurity Analyst", icon: "fingerprint", security: 98, growth: 35, roadmap: ["Network Security Fundamentals", "CompTIA Security+ Prep", "Incident Response Training"], benefits: ["Unbeatable Stability", "Critical Infrastructure", "Dynamic Tasks", "Global Mobility"], uses: "Defending the world's data from digital threats." },
+            { title: "UI/UX Designer", icon: "palette", security: 82, growth: 18, roadmap: ["Visual Design Principles", "User Psychology Studies", "Advanced Prototyping"], benefits: ["Creative Freedom", "Impactful Work", "Growing Sector", "Hybrid Work"], uses: "Designing intuitive digital experiences." },
+            { title: "Ethical Hacker", icon: "shield-check", security: 94, growth: 31, roadmap: ["Linux Mastery", "Certified Ethical Hacker (CEH)", "Bug Bounty Hunting"], benefits: ["Prestige", "Lucrative Bonuses", "Action-Oriented", "Essential Role"], uses: "Finding vulnerabilities before the bad guys do." },
+            { title: "FullStack Dev", icon: "code-2", security: 88, growth: 22, roadmap: ["Frontend Frameworks", "Node.js & Databases", "System Architecture"], benefits: ["Versatility", "Fast Promotion", "High Freelance Value", "Control"], uses: "Building end-to-end digital solutions." },
+            { title: "Cloud Engineer", icon: "cloud", security: 94, growth: 28, roadmap: ["AWS/Azure Essentials", "Terraform Automation", "Serverless Architectures"], benefits: ["Scalable Growth", "Mission Critical", "High Paying", "Remote Friendly"], uses: "Managing the virtual infrastructure of the internet." },
+            { title: "Blockchain Dev", icon: "bitcoin", security: 78, growth: 55, roadmap: ["Cryptography Basics", "Solidity Smart Contracts", "DeFi Protocol Design"], benefits: ["Web3 Pioneer", "High Incentives", "Decentralized", "Unique Tech"], uses: "Building secure and trustless economies." },
+            { title: "Robotics Engineer", icon: "bot", security: 89, growth: 26, roadmap: ["Embedded C Programming", "Control Theory", "ROS (Robot Operating System)"], benefits: ["Physical Impact", "Hard-Tech Focus", "Futuristic", "High Interest"], uses: "Bridging the gap between software and hardware." },
+            { title: "Data Scientist", icon: "microscope", security: 91, growth: 33, roadmap: ["Statistical Modeling", "Machine Learning Ops (MLOps)", "Big Data Engineering"], benefits: ["Strategic Influence", "High Demand", "Analytical Depth", "Decision Power"], uses: "Turning raw data into actionable business intelligence." },
+            { title: "AR/VR Engineer", icon: "eye", security: 84, growth: 48, roadmap: ["3D Modeling Essentials", "Unity/Unreal Engine Mastery", "Spatial Computing Logic"], benefits: ["Cutting Edge", "Gaming & Training", "Immersive Tech", "High Growth"], uses: "Creating the next generation of virtual reality experiences." },
+            { title: "DevOps Engineer", icon: "terminal", security: 96, growth: 24, roadmap: ["CI/CD Pipeline Design", "Kubernetes Orchestration", "Site Reliability Metrics"], benefits: ["High Authority", "Automation Focus", "Indispensable", "Great Salary"], uses: "Ensuring software delivery is fast, reliable, and automated." },
+            { title: "Mobile App Dev", icon: "smartphone", security: 86, growth: 23, roadmap: ["Swift/Kotlin Basics", "Cross-Platform Tools (Flutter)", "Mobile UI Optimization"], benefits: ["Direct Reach", "Fast Results", "Entrepreneurial", "Agency Value"], uses: "Crafting powerful applications for the palm of your hand." },
+            { title: "IoT Specialist", icon: "cpu", security: 87, growth: 29, roadmap: ["Sensor Integration", "MQTT/Connectivity Protocols", "Edge Computing Logic"], benefits: ["Smart Tech Focus", "Inventive", "Hardware-Software Mix", "Niche Value"], uses: "Connecting everyday objects to the smart network." },
+            { title: "Product Manager", icon: "briefcase", security: 90, growth: 15, roadmap: ["Market Gap Analysis", "Agile Roadmap Planning", "Stakeholder Management"], benefits: ["Leadership", "Big Picture View", "Networking", "Strategy Focused"], uses: "Directing the vision and development cycle of tech products." },
+            { title: "Bioinformatics", icon: "dna", security: 93, growth: 21, roadmap: ["Genomic Data Analysis", "Python for Biology", "Computational Modeling"], benefits: ["Life-Saving Work", "Scientific Depth", "High Prestige", "Unique Niche"], uses: "Solving biological mysteries through computation." },
+            { title: "FinTech Dev", icon: "landmark", security: 92, growth: 19, roadmap: ["Financial API Security", "High-Frequency Logic", "Compliance Engineering"], benefits: ["Elite Industry", "High Stability", "Performance Logic", "Wall St. Access"], uses: "Coding the systems that power modern global finance." },
+            { title: "Game Developer", icon: "gamepad-2", security: 80, growth: 12, roadmap: ["Game Physics & Math", "C# for Unity", "Shaders & Graphics"], benefits: ["Passion Driven", "Visual Output", "Vibrant Community", "Creative Flow"], uses: "Architecting immersive digital worlds." },
+            { title: "Digital Strategist", icon: "trending-up", security: 85, growth: 17, roadmap: ["Consumer Analytics", "Growth Hacking Systems", "Multi-Channel Planning"], benefits: ["ROI Driven", "Market Influence", "Consulting Ops", "High Flexibility"], uses: "Engineering growth and brand dominance." },
+            { title: "Aerospace Coder", icon: "rocket", security: 97, growth: 25, roadmap: ["Real-time OS (RTOS)", "Avionics Safety Logic", "Systems Integration"], benefits: ["Space Tech", "Elite Engineering", "High Security", "Prestigious"], uses: "Critical code for flight and space travel." },
+            { title: "Content Architect", icon: "pen-tool", security: 75, growth: 10, roadmap: ["SEO Systems Design", "AI-Assisted Workflows", "Brand Narrative Logic"], benefits: ["Creative Control", "Remote Lifestyle", "Immediate Impact", "Brand Value"], uses: "Designing high-level content systems." }
+        ];
+
+        function showPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            window.scrollTo(0,0);
+        }
+
+        const grid = document.getElementById('career-grid');
+        careers.forEach(job => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<i data-lucide="${job.icon}"></i><h3>${job.title}</h3>`;
+            card.onclick = () => viewJob(job.title);
+            grid.appendChild(card);
+        });
+
+        function viewJob(title) {
+            const job = careers.find(c => c.title === title);
+            document.getElementById('career-content').innerHTML = `
+                <div style="text-align:center; margin-bottom:30px;">
+                    <i data-lucide="${job.icon}" style="width:80px; height:80px;"></i>
+                    <h1 style="color:var(--accent); margin:10px 0 0 0;">${job.title}</h1>
+                    <p style="opacity:0.7; max-width:600px; margin:15px auto; font-size:1.1rem;">${job.uses}</p>
+                </div>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:40px;">
+                    <div>
+                        <h3 style="color:var(--accent); display:flex; align-items:center; gap:10px;"><i data-lucide="map" style="width:20px;"></i> SUCCESS ROADMAP</h3>
+                        <div class="modern-roadmap">${job.roadmap.map((s, i) => `<div class="roadmap-step"><div class="step-blob">${i+1}</div><div class="step-content"><span>Phase ${i+1}</span><b>${s}</b></div></div>`).join('')}</div>
+                    </div>
+                    <div>
+                        <h3 style="color:var(--accent);">CAREER ANALYTICS</h3>
+                        <div class="security-container">
+                            <div style="display:flex; justify-content:space-between;"><span>Job Security</span><span style="color:var(--success); font-weight:800;">${job.security}%</span></div>
+                            <div class="meter-bg"><div class="meter-fill" style="width: 0%" id="meterFill"></div></div>
+                        </div>
+                        <div style="margin-top:40px;"><h3 style="color:var(--accent);">TOP PERKS</h3><div style="display:flex; flex-wrap:wrap; gap:10px;">${job.benefits.map(b=>`<span class="benefit-tag">${b}</span>`).join('')}</div></div>
+                    </div>
+                </div>`;
+            showPage('page2'); lucide.createIcons();
+            setTimeout(() => { document.getElementById('meterFill').style.width = job.security + "%"; }, 100);
+        }
+
+        function showGrowthPage() {
+            const list = document.getElementById('growth-list');
+            list.innerHTML = '';
+            careers.sort((a,b) => b.growth - a.growth).forEach(job => {
+                const row = document.createElement('div');
+                row.className = 'growth-row';
+                row.innerHTML = `
+                    <div style="width: 180px; font-size: 0.9rem; font-weight: 700;">${job.title}</div>
+                    <div class="growth-bar-container"><div class="growth-bar-fill" data-w="${job.growth}"></div></div>
+                    <div style="width: 60px; color: #f472b6; font-weight: 800;">+${job.growth}%</div>
+                `;
+                list.appendChild(row);
+            });
+            showPage('page3');
+            setTimeout(() => {
+                document.querySelectorAll('.growth-bar-fill').forEach(bar => { bar.style.width = bar.getAttribute('data-w') + "%"; });
+            }, 100);
+        }
+
+        let scores = { Technical: 0, Creative: 0, Leadership: 0 };
+        let currentQ = 0;
+        const quizData = [
+            { text: "How do you prefer to handle complex problems?", options: [{t:"Analyze data and use logic", s:"Technical"}, {t:"Think of a creative, visual solution", s:"Creative"}, {t:"Coordinate a team to solve it", s:"Leadership"}] },
+            { text: "What excites you more in a digital product?", options: [{t:"The clean code and performance", s:"Technical"}, {t:"The user interface and design", s:"Creative"}, {t:"The business model and strategy", s:"Leadership"}] },
+            { text: "In your free time, you'd rather...", options: [{t:"Build a gadget or program", s:"Technical"}, {t:"Edit a video or paint", s:"Creative"}, {t:"Plan a trip or organize a group", s:"Leadership"}] }
+        ];
+
+        function startQuiz() {
+            currentQ = 0; scores = { Technical: 0, Creative: 0, Leadership: 0 };
+            showPage('page4'); renderQ();
+        }
+
+        function renderQ() {
+            const q = quizData[currentQ];
+            document.getElementById('question-text').innerText = q.text;
+            const optDiv = document.getElementById('quiz-options');
+            optDiv.innerHTML = '';
+            q.options.forEach(o => {
+                const b = document.createElement('button');
+                b.className = 'option-btn'; b.innerText = o.t;
+                b.onclick = () => { scores[o.s]++; currentQ++; if(currentQ < 3) renderQ(); else finishQuiz(); };
+                optDiv.appendChild(b);
+            });
+        }
+
+        function finishQuiz() {
+            showPage('page5');
+            lucide.createIcons();
+            document.getElementById('sendBtn').onclick = () => {
+                // 1. Capture the email typed by the user
+                const mail = document.getElementById('userEmail').value;
+                
+                if(!mail.includes('@')) return alert("Please enter a valid email address");
+                
+                const winner = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+                let path = "";
+                let reasonText = "";
+
+                if(winner === "Technical") {
+                    path = "AI, Cybersecurity & Data Science";
+                    reasonText = "You exhibit strong logical reasoning and a preference for building high-performance technical systems.";
+                } else if(winner === "Creative") {
+                    path = "UI/UX, Game Design & AR/VR";
+                    reasonText = "You prioritize aesthetic, user psychology, and immersive storytelling in digital environments.";
+                } else {
+                    path = "Product Management & Digital Strategy";
+                    reasonText = "You excel at organizing teams, identifying market gaps, and defining the big-picture vision.";
+                }
+
+                const emailMessage = `RECOMMENDED CAREER PATH: ${path}\nREASON: ${reasonText}`;
+
+                // 2. Transmit to the USER'S email
+                // Ensure your EmailJS Template uses {{to_email}} in the "To Email" field
+                emailjs.send(SERVICE_ID, TEMPLATE_ID, { 
+                    to_email: mail,        // This sends it to the user's input
+                    user_path: path,       // Optional variable for template
+                    user_reason: reasonText, // Optional variable for template
+                    message: emailMessage
+                }).then(() => {
+                    alert("Report Transmitted to " + mail + "! Please check your inbox."); 
+                    location.reload();
+                }, (error) => {
+                    alert("Transmission failed. Please check your EmailJS configuration.");
+                    console.log("Error:", error);
+                });
+            };
+        }
+        
+        lucide.createIcons();
+    </script>
+</body>
+</html>
